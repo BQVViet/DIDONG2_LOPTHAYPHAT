@@ -158,16 +158,13 @@ export default function ProfileScreen({
             <View style={styles.headerInfo}>
               <View style={styles.nameContainer}>
                 <Text style={styles.userName}>{user?.name}</Text>
-                <View style={styles.vipBadge}>
-                  <FontAwesome5 name="crown" size={8} color="#fff" />
-                  <Text style={styles.vipText}>PRO</Text>
-                </View>
+                 
               </View>
               <Text style={styles.userSubText}>{user?.email}</Text>
             </View>
-            <TouchableOpacity style={styles.settingsIcon} onPress={() => console.log('Edit Profile')}>
+            {/* <TouchableOpacity style={styles.settingsIcon} onPress={() => console.log('Edit Profile')}>
                 <Ionicons name="settings-outline" size={24} color="#fff" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           {/* QUICK STATS */}
@@ -195,7 +192,7 @@ export default function ProfileScreen({
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Tài khoản của tôi</Text>
           {[
-            { title: 'Đơn hàng của tôi', icon: 'package-variant-closed', lib: 'MaterialCommunityIcons', badge: ordersCount, color: '#3b82f6', desc: 'Theo dõi đơn hàng', route: '/OrderHistoryScreen' },
+
             { title: 'Danh sách yêu thích', icon: 'heart', lib: 'Ionicons', badge: 0, color: '#f43f5e', desc: 'Sản phẩm đã lưu', route: '/wishlist' },
             { title: 'Địa chỉ nhận hàng', icon: 'location-sharp', lib: 'Ionicons', badge: addressesCount, color: '#10b981', desc: 'Quản lý địa chỉ', route: '/AddressManagementScreen' },
             { title: 'Thanh toán', icon: 'credit-card', lib: 'FontAwesome5', badge: paymentMethodsCount, color: '#8b5cf6', desc: 'Ví và thẻ đã lưu', route: '/PaymentMethodsScreen' },
@@ -273,7 +270,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#4F46E5',
     paddingTop: Platform.OS === 'ios' ? 20 : 40,
-    paddingBottom: 80, // Tăng padding để membership card đè lên đẹp hơn
+    paddingBottom: 25, // Tăng padding để membership card đè lên đẹp hơn
     paddingHorizontal: 25,
     borderBottomLeftRadius: 35,
     borderBottomRightRadius: 35,

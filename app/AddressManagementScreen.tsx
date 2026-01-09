@@ -1,3 +1,6 @@
+
+
+
 import React, { useState } from 'react';
 import {
   View,
@@ -47,7 +50,18 @@ export default function AddressManagementScreen() {
   const [addresses, setAddresses] = useState(initialAddresses);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // Toggle form với hiệu ứng mượt
+  // HÀM MỚI: Chọn địa chỉ và truyền về Checkout
+  const handleSelectAddress = (addressItem: typeof initialAddresses[0]) => {
+    router.push({
+      pathname: "/CheckoutScreen" as any, // Hãy đảm bảo đường dẫn này đúng với cấu trúc file của bạn
+      params: {
+        selectedName: addressItem.fullName,
+        selectedPhone: addressItem.phone,
+        selectedAddress: addressItem.address
+      }
+    });
+  };
+
   const toggleAddForm = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setShowAddForm(!showAddForm);
@@ -123,308 +137,274 @@ export default function AddressManagementScreen() {
 
         {/* Danh sách địa chỉ */}
         {addresses.map((address) => (
-          <View 
+          <TouchableOpacity 
             key={address.id} 
-            style={[
-              styles.addressCard,
-              address.isDefault && styles.defaultCard
-            ]}
+            activeOpacity={0.9} 
+            onPress={() => handleSelectAddress(address)} // Thêm sự kiện chọn địa chỉ
           >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardHeaderLeft}>
-                <View style={styles.iconCircle}>
-                  <Ionicons name="location" size={20} color="#059669" />
-                </View>
-                <View>
-                  <View style={styles.nameRow}>
-                    <Text style={styles.addressName}>{address.name}</Text>
-                    {address.isDefault && (
-                      <View style={styles.defaultBadge}>
-                        <Text style={styles.defaultBadgeText}>Mặc định</Text>
-                      </View>
-                    )}
+            <View 
+              style={[
+                styles.addressCard,
+                address.isDefault && styles.defaultCard
+              ]}
+            >
+              <View style={styles.cardHeader}>
+                <View style={styles.cardHeaderLeft}>
+                  <View style={styles.iconCircle}>
+                    <Ionicons name="location" size={20} color="#059669" />
                   </View>
-                  <Text style={styles.userNameText}>{address.fullName}</Text>
+                  <View>
+                    <View style={styles.nameRow}>
+                      <Text style={styles.addressName}>{address.name}</Text>
+                      {address.isDefault && (
+                        <View style={styles.defaultBadge}>
+                          <Text style={styles.defaultBadgeText}>Mặc định</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.userNameText}>{address.fullName}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity style={styles.editBtn}>
+                    <Ionicons name="create-outline" size={20} color="#2563eb" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.deleteBtn} onPress={() => deleteAddress(address.id)}>
+                    <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                  </TouchableOpacity>
                 </View>
               </View>
-              
-              <View style={styles.actionButtons}>
-                <TouchableOpacity style={styles.editBtn}>
-                  <Ionicons name="create-outline" size={20} color="#2563eb" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteBtn} onPress={() => deleteAddress(address.id)}>
-                  <Ionicons name="trash-outline" size={20} color="#ef4444" />
-                </TouchableOpacity>
+
+              <View style={styles.addressInfoBox}>
+                <Text style={styles.addressText}>{address.address}</Text>
+                <Text style={styles.phoneText}>{address.phone}</Text>
               </View>
-            </View>
 
-            <View style={styles.addressInfoBox}>
-              <Text style={styles.addressText}>{address.address}</Text>
-              <Text style={styles.phoneText}>{address.phone}</Text>
+            
             </View>
-
-            {!address.isDefault && (
-              <TouchableOpacity 
-                style={styles.setAsDefaultBtn} 
-                onPress={() => setDefault(address.id)}
-              >
-                <Ionicons name="checkmark-circle-outline" size={20} color="#059669" />
-                <Text style={styles.setAsDefaultText}>Đặt làm mặc định</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#F1F5F9' // Màu nền xám nhạt hơn để làm nổi bật Card trắng
-  },
-  header: {
-    backgroundColor: '#059669',
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'ios' ? 10 : 20,
-    paddingBottom: 40,
-    borderBottomLeftRadius: 40, // Bo góc mạnh hơn tạo sự mềm mại
-    borderBottomRightRadius: 40,
-    // Đổ bóng Header sâu hơn
-    elevation: 12,
-    shadowColor: '#059669',
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerLeft: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 16 
-  },
-  backButton: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    padding: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  headerTitle: { 
-    color: 'white', 
-    fontSize: 22, // Tăng size chữ
-    fontWeight: '800', // Chữ dày hơn
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: { 
-    color: '#D1FAE5', 
-    fontSize: 13, 
-    opacity: 0.9,
-    marginTop: 2 
-  },
-  addButton: {
-    backgroundColor: 'white',
-    width: 48,
-    height: 48,
-    borderRadius: 16, // Chuyển từ tròn sang Squircle (bo góc vuông)
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  scrollContainer: { 
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 40 
-  },
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#F8FAFC' }, // Màu nền Slate 50 nhẹ nhàng hơn
+    
+    // HEADER
+    header: {
+      backgroundColor: '#059669',
+      paddingHorizontal: 24,
+      paddingTop: Platform.OS === 'ios' ? 10 : 40,
+      paddingBottom: 35,
+      borderBottomLeftRadius: 32, // Bo góc tinh tế hơn
+      borderBottomRightRadius: 32,
+      shadowColor: '#059669',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.25,
+      shadowRadius: 15,
+      elevation: 15,
+      zIndex: 10,
+    },
+    headerContent: { 
+      flexDirection: 'row', 
+      alignItems: 'center', 
+      justifyContent: 'space-between' 
+    },
+    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+    backButton: { 
+      backgroundColor: 'rgba(255,255,255,0.2)', 
+      padding: 10, 
+      borderRadius: 16, 
+      borderWidth: 1, 
+      borderColor: 'rgba(255,255,255,0.1)' 
+    },
+    headerTitle: { 
+      color: 'white', 
+      fontSize: 20,
+     
+      fontWeight: '800', 
+      letterSpacing: -0.5 
+    },
+    headerSubtitle: { 
+      color: '#D1FAE5', 
+      fontSize: 13, 
+      fontWeight: '500', 
+      opacity: 0.9, 
+      marginTop: 2 
+    },
+    addButton: { 
+      backgroundColor: 'white', 
+      width: 48, 
+      height: 48, 
+      borderRadius: 16, 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      elevation: 8,
+      shadowColor: '#000',
+      shadowOpacity: 0.1,
+      shadowRadius: 10,
 
-  // Form Styles - Làm cho Input trông "sạch" hơn
-  addForm: {
-    backgroundColor: 'white',
-    borderRadius: 28,
-    padding: 24,
-    marginBottom: 24,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-  },
-  formTitle: { 
-    fontSize: 19, 
-    fontWeight: 'bold', 
-    color: '#0F172A', 
-    marginBottom: 20,
-    letterSpacing: -0.5 
-  },
-  input: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: '#1E293B',
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#F1F5F9', // Thêm border mờ để định hình input
-  },
-  textArea: { 
-    height: 100, 
-    textAlignVertical: 'top' 
-  },
-  formActions: { 
-    flexDirection: 'row', 
-    gap: 12, 
-    marginTop: 8 
-  },
-  cancelBtn: { 
-    flex: 1, 
-    backgroundColor: '#F1F5F9', 
-    paddingVertical: 16, 
-    borderRadius: 16, 
-    alignItems: 'center' 
-  },
-  cancelBtnText: { 
-    color: '#64748B', 
-    fontWeight: '700' 
-  },
-  saveBtn: { 
-    flex: 1, 
-    backgroundColor: '#059669', 
-    paddingVertical: 16, 
-    borderRadius: 16, 
-    alignItems: 'center',
-    elevation: 4,
-  },
-  saveBtnText: { 
-    color: 'white', 
-    fontWeight: '700' 
-  },
+    },
 
-  // Card Styles - Tăng độ tương phản
-  addressCard: {
-    backgroundColor: 'white',
-    borderRadius: 28,
-    padding: 20,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  defaultCard: {
-    borderColor: '#059669', // Hiện rõ viền xanh khi mặc định
-    backgroundColor: '#FFFFFF',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  cardHeaderLeft: { 
-    flexDirection: 'row', 
-    gap: 14, 
-    flex: 1 
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#ECFDF5',
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  nameRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 8,
-    flexWrap: 'wrap' 
-  },
-  addressName: { 
-    fontSize: 17, 
-    fontWeight: '700', 
-    color: '#0F172A' 
-  },
-  defaultBadge: { 
-    backgroundColor: '#059669', 
-    paddingHorizontal: 10, 
-    paddingVertical: 4, 
-    borderRadius: 10 
-  },
-  defaultBadgeText: { 
-    color: 'white', 
-    fontSize: 10, 
-    fontWeight: '800',
-    textTransform: 'uppercase'
-  },
-  userNameText: { 
-    color: '#64748B', 
-    fontSize: 14, 
-    marginTop: 4,
-    fontWeight: '500'
-  },
-  
-  actionButtons: { 
-    flexDirection: 'row', 
-    gap: 10 
-  },
-  editBtn: { 
-    backgroundColor: '#EFF6FF', 
-    padding: 10, 
-    borderRadius: 12 
-  },
-  deleteBtn: { 
-    backgroundColor: '#FEF2F2', 
-    padding: 10, 
-    borderRadius: 12 
-  },
+    // SCROLL CONTAINER
+    scrollContainer: { 
+      paddingHorizontal: 16, 
+      paddingTop: 20, 
+      paddingBottom: 40 
+    },
 
-  addressInfoBox: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  addressText: { 
-    color: '#334155', 
-    fontSize: 15, 
-    lineHeight: 22, 
-    marginBottom: 8,
-    fontWeight: '400' 
-  },
-  phoneText: { 
-    color: '#1E293B', 
-    fontSize: 14,
-    fontWeight: '600' // Làm số điện thoại nổi bật hơn
-  },
+    // FORM THÊM MỚI
+    addForm: { 
+      backgroundColor: 'white', 
+      borderRadius: 24, 
+      padding: 20, 
+      marginBottom: 24,
+      elevation: 4,
+      shadowColor: '#000',
+      shadowOpacity: 0.05,
+      shadowRadius: 15,
 
-  setAsDefaultBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F0FDFA',
-    paddingVertical: 14,
-    borderRadius: 16,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#CCFBF1',
-  },
-  setAsDefaultText: { 
-    color: '#059669', 
-    fontWeight: '700', 
-    fontSize: 15 
-  },
-});
+      borderWidth: 1,
+      borderColor: '#F1F5F9'
+    },
+    formTitle: { 
+      fontSize: 18, 
+      fontWeight: '800', 
+      color: '#1E293B', 
+      marginBottom: 16 
+    },
+    input: { 
+      backgroundColor: '#F1F5F9', 
+      borderRadius: 14, 
+      paddingHorizontal: 16, 
+      paddingVertical: 12, 
+      fontSize: 15, 
+      color: '#1E293B', 
+      marginBottom: 12, 
+      borderWidth: 1, 
+      borderColor: '#E2E8F0' 
+    },
+    textArea: { height: 80, textAlignVertical: 'top' },
+    formActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
+    cancelBtn: { 
+      flex: 1, 
+      backgroundColor: '#F1F5F9', 
+      paddingVertical: 14, 
+      borderRadius: 14, 
+      alignItems: 'center' 
+    },
+    cancelBtnText: { color: '#64748B', fontWeight: '700' },
+    saveBtn: { 
+      flex: 1, 
+      backgroundColor: '#059669', 
+      paddingVertical: 14, 
+      borderRadius: 14, 
+      alignItems: 'center' 
+    },
+    saveBtnText: { color: 'white', fontWeight: '700' },
+
+    // CARD ĐỊA CHỈ
+    addressCard: { 
+      backgroundColor: 'white', 
+      borderRadius: 24, 
+      padding: 18, 
+      marginBottom: 16, 
+      borderWidth: 1.5, 
+      borderColor: 'transparent',
+      shadowColor: '#64748B',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 3 
+    },
+    defaultCard: { 
+      borderColor: '#059669', 
+      backgroundColor: '#FFFFFF',
+      shadowColor: '#059669',
+      shadowOpacity: 0.1
+    },
+    cardHeader: { 
+      flexDirection: 'row', 
+      justifyContent: 'space-between', 
+      alignItems: 'flex-start', 
+      marginBottom: 14 
+    },
+    cardHeaderLeft: { flexDirection: 'row', gap: 12, flex: 1 },
+    iconCircle: { 
+      width: 40, 
+      height: 40, 
+      backgroundColor: '#F0FDFA', 
+      borderRadius: 12, 
+      justifyContent: 'center', 
+      alignItems: 'center' 
+    },
+    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    addressName: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
+    defaultBadge: { 
+      backgroundColor: '#059669', 
+      paddingHorizontal: 8, 
+      paddingVertical: 3, 
+      borderRadius: 8 
+    },
+    defaultBadgeText: { 
+      color: 'white', 
+      fontSize: 9, 
+      fontWeight: '900', 
+      textTransform: 'uppercase' 
+    },
+    userNameText: { 
+      color: '#64748B', 
+      fontSize: 14, 
+      marginTop: 2, 
+      fontWeight: '600' 
+    },
+
+    // ACTIONS
+    actionButtons: { flexDirection: 'row', gap: 8 },
+    editBtn: { backgroundColor: '#F0F7FF', padding: 8, borderRadius: 10 },
+    deleteBtn: { backgroundColor: '#FFF1F2', padding: 8, borderRadius: 10 },
+
+    // BOX THÔNG TIN CHI TIẾT
+    addressInfoBox: { 
+      backgroundColor: '#F8FAFC', 
+      borderRadius: 16, 
+      padding: 14, 
+      marginBottom: 14, 
+      borderWidth: 1, 
+      borderColor: '#F1F5F9' 
+    },
+    addressText: { 
+      color: '#475569', 
+      fontSize: 14, 
+      lineHeight: 20, 
+      marginBottom: 6, 
+      fontWeight: '500' 
+    },
+    phoneText: { 
+      color: '#1E293B', 
+      fontSize: 14, 
+      fontWeight: '700',
+      letterSpacing: 0.2
+    },
+
+    // NÚT ĐẶT MẶC ĐỊNH
+    setAsDefaultBtn: { 
+      flexDirection: 'row', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      backgroundColor: '#F0FDFA', 
+      paddingVertical: 12, 
+      borderRadius: 14, 
+      gap: 8, 
+      borderWidth: 1, 
+      borderColor: '#05966933' // Opacity 20%
+    },
+    setAsDefaultText: { 
+      color: '#059669', 
+      fontWeight: '700', 
+      fontSize: 14 
+    },
+  });

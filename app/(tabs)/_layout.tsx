@@ -21,7 +21,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
+          title: 'Trang chủ',
           tabBarIcon: ({ color }) => (
             <Ionicons name="home" size={28} color={color} />
           ),
@@ -30,11 +30,11 @@ export default function TabLayout() {
 
       {/* CART */}
       <Tabs.Screen
-        name="cart"
+        name="Order"
         options={{
-          title: 'Cart',
+          title: 'Đơn hàng',
           tabBarIcon: ({ color }) => (
-            <Ionicons name="cart-sharp" size={28} color={color} />
+            <Ionicons name="document-text" size={28} color={color} />
           ),
         }}
       />
@@ -43,7 +43,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="Profile"
         options={{
-          title: 'Profile',
+          title: 'Tài khoản',
           tabBarIcon: ({ color }) => (
             <Ionicons name="person" size={28} color={color} />
           ),
