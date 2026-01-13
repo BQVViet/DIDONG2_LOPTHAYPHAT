@@ -234,66 +234,240 @@ export default function PaymentMethodsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  scrollContent: { padding: 20 },
+  /* ================= BASE ================= */
+  container: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+  },
+
+  scrollContent: {
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 80, // ✅ FIX dính nút đáy
+  },
+
+  /* ================= HEADER ================= */
   header: {
     backgroundColor: '#4F46E5',
-    paddingTop: Platform.OS === 'android' ? 40 : 10,
+    paddingTop: Platform.OS === 'android' ? 40 : 15,
     paddingBottom: 25,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
   },
-  headerContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backButton: { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12, padding: 8 },
-  headerText: { flex: 1, marginLeft: 15 },
-  headerTitle: { color: 'white', fontSize: 22, fontWeight: 'bold' },
-  headerSubtitle: { color: '#e0e7ff', fontSize: 13, opacity: 0.8 },
-  addButton: { backgroundColor: 'white', padding: 10, borderRadius: 20, elevation: 5 },
-  
-  addForm: { overflow: 'hidden', backgroundColor: 'white', borderRadius: 24, marginBottom: 20, paddingHorizontal: 15 },
-  formTitle: { fontSize: 16, fontWeight: 'bold', marginVertical: 15, color: '#1e293b' },
-  input: { backgroundColor: '#f1f5f9', padding: 12, borderRadius: 15, marginBottom: 12, color: '#1e293b' },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  cancelBtn: { flex: 1, backgroundColor: '#e2e8f0', padding: 15, borderRadius: 15, marginRight: 10, alignItems: 'center' },
-  cancelBtnText: { color: '#475569', fontWeight: '600' },
-  submitBtn: { flex: 1, backgroundColor: '#4F46E5', padding: 15, borderRadius: 15, alignItems: 'center' },
-  submitBtnText: { color: 'white', fontWeight: '600' },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 12,
+    padding: 8,
+  },
+  headerText: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  headerTitle: {
+    color: 'white',
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  headerSubtitle: {
+    color: '#e0e7ff',
+    fontSize: 13,
+    opacity: 0.8,
+    marginTop: 2,
+  },
+  addButton: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 20,
+    elevation: 5,
+  },
 
-  section: { marginBottom: 25 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#1e293b', marginBottom: 15 },
-  
-  card: { 
-    backgroundColor: '#6366f1', 
-    borderRadius: 25, 
-    padding: 20, 
+  /* ================= FORM ================= */
+  addForm: {
+    overflow: 'hidden',
+    backgroundColor: 'white',
+    borderRadius: 24,
+    marginBottom: 20,
+    paddingHorizontal: 15,
+    paddingBottom: 20,
+  },
+  formTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginVertical: 15,
+    color: '#1e293b',
+  },
+  input: {
+    backgroundColor: '#f1f5f9',
+    padding: 12,
+    borderRadius: 15,
+    marginBottom: 12,
+    color: '#1e293b',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: '#e2e8f0',
+    padding: 15,
+    borderRadius: 15,
+    marginRight: 10,
+    alignItems: 'center',
+  },
+  cancelBtnText: {
+    color: '#475569',
+    fontWeight: '600',
+  },
+  submitBtn: {
+    flex: 1,
+    backgroundColor: '#4F46E5',
+    padding: 15,
+    borderRadius: 15,
+    alignItems: 'center',
+  },
+  submitBtnText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+
+  /* ================= SECTION ================= */
+  section: {
+    marginBottom: 25,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 15,
+  },
+
+  /* ================= CARD ================= */
+  card: {
+    backgroundColor: '#6366f1',
+    borderRadius: 25,
+    padding: 20,
     marginBottom: 15,
     elevation: 8,
     shadowColor: '#4F46E5',
     shadowOpacity: 0.3,
     shadowRadius: 10,
   },
-  defaultCardRing: { borderWidth: 3, borderColor: '#a5b4fc' },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 },
-  cardType: { color: '#e0e7ff', fontSize: 14, marginBottom: 4 },
-  cardNumber: { color: 'white', fontSize: 20, letterSpacing: 2, fontWeight: 'bold' },
-  defaultBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  defaultBadgeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  expiryLabel: { color: '#e0e7ff', fontSize: 10, marginBottom: 2 },
-  expiryValue: { color: 'white', fontSize: 16, fontWeight: '600' },
-  cardActions: { flexDirection: 'row' },
-  actionBtn: { backgroundColor: 'rgba(255,255,255,0.2)', padding: 10, borderRadius: 12, marginLeft: 8 },
+  defaultCardRing: {
+    borderWidth: 3,
+    borderColor: '#a5b4fc',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+  },
+  cardType: {
+    color: '#e0e7ff',
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  cardNumber: {
+    color: 'white',
+    fontSize: 20,
+    letterSpacing: 2,
+    fontWeight: 'bold',
+  },
+  defaultBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  defaultBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  expiryLabel: {
+    color: '#e0e7ff',
+    fontSize: 10,
+    marginBottom: 2,
+  },
+  expiryValue: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cardActions: {
+    flexDirection: 'row',
+  },
+  actionBtn: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: 10,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
 
-  otherMethodsList: { backgroundColor: 'white', borderRadius: 25, overflow: 'hidden', elevation: 2 },
-  methodItem: { flexDirection: 'row', alignItems: 'center', padding: 15 },
-  methodIconBg: { backgroundColor: '#f1f5f9', padding: 10, borderRadius: 15, marginRight: 15 },
-  methodName: { flex: 1, fontSize: 15, color: '#1e293b' },
-  borderBottom: { borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  /* ================= OTHER METHODS ================= */
+  otherMethodsList: {
+    backgroundColor: 'white',
+    borderRadius: 25,
+    overflow: 'hidden',
+    elevation: 2,
+  },
+  methodItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+  },
+  methodIconBg: {
+    backgroundColor: '#f1f5f9',
+    padding: 10,
+    borderRadius: 15,
+    marginRight: 15,
+  },
+  methodName: {
+    flex: 1,
+    fontSize: 15,
+    color: '#1e293b',
+  },
+  borderBottom: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
 
-  securityNotice: { backgroundColor: '#eff6ff', borderRadius: 25, padding: 20, flexDirection: 'row', alignItems: 'center' },
-  securityIcon: { backgroundColor: '#3b82f6', padding: 12, borderRadius: 18, marginRight: 15 },
-  securityTextContent: { flex: 1 },
-  securityTitle: { color: '#1e3a8a', fontWeight: 'bold', marginBottom: 4 },
-  securityDesc: { color: '#1d4ed8', fontSize: 12, lineHeight: 18 },
+  /* ================= SECURITY ================= */
+  securityNotice: {
+    backgroundColor: '#eff6ff',
+    borderRadius: 25,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  securityIcon: {
+    backgroundColor: '#3b82f6',
+    padding: 12,
+    borderRadius: 18,
+    marginRight: 15,
+  },
+  securityTextContent: {
+    flex: 1,
+  },
+  securityTitle: {
+    color: '#1e3a8a',
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  securityDesc: {
+    color: '#1d4ed8',
+    fontSize: 12,
+    lineHeight: 18,
+  },
 });

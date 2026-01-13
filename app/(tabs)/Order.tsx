@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,56 +8,68 @@ import {
   SafeAreaView,
   Image,
   StatusBar,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-
-// --- Các Interface giữ nguyên như cũ ---
-interface OrderItem {
-  id: number;
-  name: string;
-  quantity: number;
-  price: number;
-  image: string;
-}
-
-interface Order {
-  id: string;
-  date: string;
-  status: 'delivered' | 'shipping' | 'processing' | 'cancelled';
-  statusText: string;
-  total: number;
-  items: OrderItem[];
-}
-
-const orders: Order[] = [
-  {
-    id: 'ORD-2024-001',
-    date: '23/12/2024',
-    status: 'delivered',
-    statusText: 'Đã giao hàng',
-    total: 29990000,
-    items: [
-      {
-        id: 1,
-        name: 'iPhone 15 Pro Max 256GB',
-        quantity: 1,
-        price: 29990000,
-        image: 'https://images.unsplash.com/photo-1696446701796-da61225697cc?q=80&w=500',
-      },
-    ],
-  },
-];
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OrderHistoryScreen() {
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState('all');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Load dữ liệu mỗi khi người dùng quay lại màn hình này
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrders();
+    }, [])
+  );
+
+  const fetchOrders = async () => {
+    try {
+      const storedOrders = await AsyncStorage.getItem('user_orders');
+      if (storedOrders) {
+        setOrders(JSON.parse(storedOrders));
+      }
+    } catch (error) {
+      console.error("Lỗi load lịch sử đơn hàng:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchOrders();
+  };
 
   const formatPrice = (price: number) => price.toLocaleString('vi-VN') + 'đ';
 
+  // Logic lọc đơn hàng dựa trên Tab (Chuyển đổi status tiếng Việt sang key tương ứng)
+  const getStatusKey = (statusText: string) => {
+    if (statusText === 'Chờ xác nhận' || statusText === 'processing') return 'processing';
+    if (statusText === 'Đang giao' || statusText === 'shipping') return 'shipping';
+    if (statusText === 'Đã giao' || statusText === 'delivered') return 'delivered';
+    if (statusText === 'Đã hủy' || statusText === 'cancelled') return 'cancelled';
+    return 'processing';
+  };
+
   const filteredOrders = selectedTab === 'all' 
     ? orders 
-    : orders.filter(order => order.status === selectedTab);
+    : orders.filter(order => getStatusKey(order.status) === selectedTab);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color="#4F46E5" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -78,7 +90,7 @@ export default function OrderHistoryScreen() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsScroll}>
           {[
             { id: 'all', label: 'Tất cả' },
-            { id: 'processing', label: 'Xử lý' },
+            { id: 'processing', label: 'Đang xử lý' },
             { id: 'shipping', label: 'Giao hàng' },
             { id: 'delivered', label: 'Hoàn thành' },
             { id: 'cancelled', label: 'Đã hủy' },
@@ -102,13 +114,49 @@ export default function OrderHistoryScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={styles.listContainer}>
-         {/* Nội dung danh sách đơn hàng (giống như code trước) */}
-         {filteredOrders.map(order => (
-             <View key={order.id} style={styles.orderCard}>
-                 {/* ... content ... */}
-             </View>
-         ))}
+      <ScrollView 
+        contentContainerStyle={styles.listContainer}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {filteredOrders.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Ionicons name="receipt-outline" size={80} color="#cbd5e1" />
+            <Text style={styles.emptyText}>Không tìm thấy đơn hàng nào</Text>
+          </View>
+        ) : (
+          filteredOrders.map((order, index) => (
+            <TouchableOpacity key={order.orderId || index} style={styles.orderCard}>
+              <View style={styles.orderHeader}>
+                <Text style={styles.orderIdText}>Mã: {order.orderId || order.id}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: order.status === 'Đã hủy' ? '#fee2e2' : '#e0e7ff' }]}>
+                   <Text style={[styles.statusText, { color: order.status === 'Đã hủy' ? '#ef4444' : '#4f46e5' }]}>
+                     {order.status || 'Đang xử lý'}
+                   </Text>
+                </View>
+              </View>
+
+              {/* Hiển thị danh sách sản phẩm trong đơn hàng */}
+              {order.items.map((item: any, idx: number) => (
+                <View key={idx} style={styles.productItem}>
+                  <Image source={{ uri: item.image }} style={styles.productImage} />
+                  <View style={styles.productInfo}>
+                    <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.productMeta}>Số lượng: {item.finalQty || item.quantity}</Text>
+                    <Text style={styles.productPrice}>{formatPrice(item.finalPrice || item.price)}</Text>
+                  </View>
+                </View>
+              ))}
+
+              <View style={styles.orderFooter}>
+                <Text style={styles.dateText}>{order.date || order.createdAt}</Text>
+                <View style={styles.totalContainer}>
+                  <Text style={styles.totalLabel}>Tổng thanh toán: </Text>
+                  <Text style={styles.totalValue}>{formatPrice(order.total || order.totalAmount)}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -117,7 +165,7 @@ export default function OrderHistoryScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8fafc' },
   header: {
-    backgroundColor: '#4F46E5', // Sử dụng màu đặc thay cho Gradient
+    backgroundColor: '#4F46E5',
     paddingTop: 50,
     paddingBottom: 25,
     paddingHorizontal: 20,
@@ -143,12 +191,32 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: 'white' },
   tabInactive: { backgroundColor: 'rgba(255,255,255,0.2)' },
   tabText: { fontSize: 14, fontWeight: '700' },
-  listContainer: { padding: 16 },
+  listContainer: { padding: 16, flexGrow: 1 },
   orderCard: {
     backgroundColor: 'white',
     borderRadius: 20,
     padding: 16,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     elevation: 3,
   },
+  orderHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15, borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingBottom: 10 },
+  orderIdText: { fontWeight: 'bold', color: '#64748b', fontSize: 13 },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  statusText: { fontSize: 11, fontWeight: 'bold' },
+  productItem: { flexDirection: 'row', marginBottom: 12 },
+  productImage: { width: 60, height: 60, borderRadius: 12, backgroundColor: '#f1f5f9' },
+  productInfo: { flex: 1, marginLeft: 12, justifyContent: 'center' },
+  productName: { fontSize: 14, fontWeight: '700', color: '#1e293b' },
+  productMeta: { fontSize: 12, color: '#94a3b8', marginTop: 2 },
+  productPrice: { fontSize: 14, fontWeight: 'bold', color: '#4f46e5', marginTop: 2 },
+  orderFooter: { borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: 12, marginTop: 5, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  dateText: { fontSize: 12, color: '#94a3b8' },
+  totalContainer: { flexDirection: 'row', alignItems: 'center' },
+  totalLabel: { fontSize: 12, color: '#64748b' },
+  totalValue: { fontSize: 16, fontWeight: '900', color: '#4f46e5' },
+  emptyBox: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 100 },
+  emptyText: { color: '#94a3b8', marginTop: 10, fontSize: 16 },
 });
