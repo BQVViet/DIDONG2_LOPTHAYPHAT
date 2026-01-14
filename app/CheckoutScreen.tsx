@@ -532,19 +532,32 @@ const styles = StyleSheet.create({
   },
 
   // ===== FOOTER (KHÔNG ABSOLUTE – KHÔNG DƯ) =====
-  footer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
+ footer: {
+  backgroundColor: '#fff',
 
-    borderTopColor: '#F1F5F9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 8,
-  },
+  /* ===== PADDING ===== */
+  paddingHorizontal: 20,
+  paddingTop: 20,
+
+  // iOS có home indicator → cần nhiều hơn
+  // Android có gesture bar → chừa vừa phải
+  paddingBottom: Platform.OS === 'ios' ? 34 : 28,
+
+  /* ===== ĐẨY FOOTER LÊN KHỎI NAV ANDROID ===== */
+  marginBottom: Platform.OS === 'android' ? 0 : 0,
+
+  /* ===== BORDER ===== */
+  borderTopWidth: 1,
+  borderTopColor: '#F1F5F9',
+
+  /* ===== SHADOW ===== */
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: -4 },
+  shadowOpacity: 0.06,
+  shadowRadius: 6,
+  elevation: 8,
+},
+
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

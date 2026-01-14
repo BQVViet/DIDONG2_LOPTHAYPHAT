@@ -14,11 +14,11 @@ import {
   Alert,
   Platform
 } from 'react-native';
-import { 
-  Ionicons, 
-  MaterialCommunityIcons, 
-  FontAwesome5, 
-  MaterialIcons 
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+  FontAwesome5,
+  MaterialIcons
 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -35,15 +35,15 @@ interface ProfileProps {
   reviewsCount?: number;
 }
 
-export default function ProfileScreen({ 
-  onNavigate = () => {}, 
+export default function ProfileScreen({
+  onNavigate = () => { },
   ordersCount = 0,
   addressesCount = 0,
   paymentMethodsCount = 0,
   reviewsCount = 0,
 }: ProfileProps) {
   const router = useRouter();
-  
+
   const [user, setUser] = useState<{
     name: string;
     email: string;
@@ -86,7 +86,7 @@ export default function ProfileScreen({
           email: u.email,
           avatarUrl: u.photoUrl,
         });
-        
+
         startAnimations();
       } else {
         handleLogout();
@@ -144,50 +144,59 @@ export default function ProfileScreen({
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <ScrollView showsVerticalScrollIndicator={false}>
-        
+
         {/* HEADER SECTION */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <View style={styles.avatarWrapper}>
+            <TouchableOpacity
+              style={styles.avatarWrapper}
+              activeOpacity={0.7}
+              onPress={() => router.push("/ProfileScreen" as any)}
+            >
+              {user?.avatarUrl ? (
+                <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+              ) : (
+                <FontAwesome5 name="user-alt" size={30} color="#4F46E5" />
+              )}
+            </TouchableOpacity>
+            {/* <View style={styles.avatarWrapper}>
                {user?.avatarUrl ? (
                  <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
                ) : (
                  <FontAwesome5 name="user-alt" size={30} color="#4F46E5" />
                )}
-            </View>
+            </View> */}
             <View style={styles.headerInfo}>
               <View style={styles.nameContainer}>
                 <Text style={styles.userName}>{user?.name}</Text>
-                 
+
               </View>
               <Text style={styles.userSubText}>{user?.email}</Text>
             </View>
-            {/* <TouchableOpacity style={styles.settingsIcon} onPress={() => console.log('Edit Profile')}>
-                <Ionicons name="settings-outline" size={24} color="#fff" />
-            </TouchableOpacity> */}
+
           </View>
 
           {/* QUICK STATS */}
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
-               <View style={[styles.statIconBg, { backgroundColor: '#f59e0b' }]}><FontAwesome5 name="award" size={12} color="#fff" /></View>
-               <Text style={styles.statValue}>156</Text>
-               <Text style={styles.statLabel}>Điểm</Text>
+              <View style={[styles.statIconBg, { backgroundColor: '#f59e0b' }]}><FontAwesome5 name="award" size={12} color="#fff" /></View>
+              <Text style={styles.statValue}>156</Text>
+              <Text style={styles.statLabel}>Điểm</Text>
             </View>
             <View style={styles.statBox}>
-               <View style={[styles.statIconBg, { backgroundColor: '#3b82f6' }]}><FontAwesome5 name="shopping-bag" size={12} color="#fff" /></View>
-               <Text style={styles.statValue}>{ordersCount}</Text>
-               <Text style={styles.statLabel}>Đơn hàng</Text>
+              <View style={[styles.statIconBg, { backgroundColor: '#3b82f6' }]}><FontAwesome5 name="shopping-bag" size={12} color="#fff" /></View>
+              <Text style={styles.statValue}>{ordersCount}</Text>
+              <Text style={styles.statLabel}>Đơn hàng</Text>
             </View>
             <View style={styles.statBox}>
-               <View style={[styles.statIconBg, { backgroundColor: '#f43f5e' }]}><FontAwesome5 name="star" size={12} color="#fff" /></View>
-               <Text style={styles.statValue}>{reviewsCount}</Text>
-               <Text style={styles.statLabel}>Đánh giá</Text>
+              <View style={[styles.statIconBg, { backgroundColor: '#f43f5e' }]}><FontAwesome5 name="star" size={12} color="#fff" /></View>
+              <Text style={styles.statValue}>{reviewsCount}</Text>
+              <Text style={styles.statLabel}>Đánh giá</Text>
             </View>
           </View>
         </View>
 
-   
+
         {/* MENU TÀI KHOẢN */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Tài khoản của tôi</Text>
@@ -197,9 +206,9 @@ export default function ProfileScreen({
             { title: 'Địa chỉ nhận hàng', icon: 'location-sharp', lib: 'Ionicons', badge: addressesCount, color: '#10b981', desc: 'Quản lý địa chỉ', route: '/AddressManagementScreen' },
             { title: 'Thanh toán', icon: 'credit-card', lib: 'FontAwesome5', badge: paymentMethodsCount, color: '#8b5cf6', desc: 'Ví và thẻ đã lưu', route: '/PaymentMethodsScreen' },
           ].map((item, idx) => (
-            <TouchableOpacity 
-              key={idx} 
-              style={styles.menuItem} 
+            <TouchableOpacity
+              key={idx}
+              style={styles.menuItem}
               onPress={() => router.push(item.route as any)}
             >
               <View style={[styles.menuIconBg, { backgroundColor: item.color + '15' }]}>
@@ -227,9 +236,9 @@ export default function ProfileScreen({
             { title: 'Ưu đãi của tôi', icon: 'card-giftcard', lib: 'MaterialIcons', color: '#06b6d4', desc: 'Voucher khả dụng', route: '/vouchers' },
             { title: 'Tùy chỉnh', icon: 'settings', lib: 'Ionicons', color: '#64748b', desc: 'Giao diện & Bảo mật', route: '/Setting' },
           ].map((item, idx) => (
-            <TouchableOpacity 
-              key={idx} 
-              style={styles.menuItem} 
+            <TouchableOpacity
+              key={idx}
+              style={styles.menuItem}
               onPress={() => router.push(item.route as any)}
             >
               <View style={[styles.menuIconBg, { backgroundColor: item.color + '15' }]}>
@@ -259,13 +268,13 @@ export default function ProfileScreen({
 
 // --- CSS ĐÃ ĐƯỢC TỐI ƯU ---
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     backgroundColor: '#F1F5F9' // Màu nền xám nhẹ dịu mắt hơn
   },
-  center: { 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   header: {
     backgroundColor: '#4F46E5',
@@ -275,8 +284,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 35,
     borderBottomRightRadius: 35,
   },
-  headerTop: { 
-    flexDirection: 'row', 
+  headerTop: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between'
   },
@@ -293,23 +302,23 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
   },
-  avatar: { 
-    width: 68, 
-    height: 68, 
-    borderRadius: 22 
+  avatar: {
+    width: 68,
+    height: 68,
+    borderRadius: 22
   },
-  headerInfo: { 
-    flex: 1, 
-    marginLeft: 18 
+  headerInfo: {
+    flex: 1,
+    marginLeft: 18
   },
-  nameContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: 4 
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4
   },
-  userName: { 
-    color: '#fff', 
-    fontSize: 20, 
+  userName: {
+    color: '#fff',
+    fontSize: 20,
     fontWeight: '700',
     letterSpacing: 0.5
   },
@@ -322,49 +331,49 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginLeft: 10,
   },
-  vipText: { 
-    color: '#fff', 
-    fontSize: 9, 
-    fontWeight: '900', 
-    marginLeft: 3 
+  vipText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '900',
+    marginLeft: 3
   },
-  userSubText: { 
-    color: '#E0E7FF', 
-    fontSize: 13, 
-    opacity: 0.9 
+  userSubText: {
+    color: '#E0E7FF',
+    fontSize: 13,
+    opacity: 0.9
   },
   settingsIcon: {
     padding: 8,
     backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 12
   },
-  
-  statsRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    marginTop: 30 
+
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30
   },
-  statBox: { 
-    backgroundColor: 'rgba(255,255,255,0.12)', 
+  statBox: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
     paddingVertical: 15,
-    borderRadius: 22, 
-    width: (width - 70) / 3, 
+    borderRadius: 22,
+    width: (width - 70) / 3,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)'
   },
-  statIconBg: { 
-    padding: 6, 
-    borderRadius: 8, 
-    marginBottom: 6 
+  statIconBg: {
+    padding: 6,
+    borderRadius: 8,
+    marginBottom: 6
   },
-  statValue: { 
-    color: '#fff', 
-    fontSize: 17, 
-    fontWeight: '700' 
+  statValue: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700'
   },
-  statLabel: { 
-    color: '#E0E7FF', 
+  statLabel: {
+    color: '#E0E7FF',
     fontSize: 11,
     fontWeight: '500'
   },
@@ -380,62 +389,62 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
     elevation: 12,
   },
-  cardHeader: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 18 
+    marginBottom: 18
   },
-  cardLabel: { 
-    color: '#94A3B8', 
-    fontSize: 10, 
+  cardLabel: {
+    color: '#94A3B8',
+    fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1
   },
-  cardRank: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginTop: 4 
+  cardRank: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4
   },
-  cardRankText: { 
-    color: '#fff', 
-    fontSize: 19, 
-    fontWeight: '700', 
-    marginLeft: 8 
+  cardRankText: {
+    color: '#fff',
+    fontSize: 19,
+    fontWeight: '700',
+    marginLeft: 8
   },
-  cardPoints: { 
-    color: '#facc15', 
-    fontSize: 18, 
-    fontWeight: '800' 
+  cardPoints: {
+    color: '#facc15',
+    fontSize: 18,
+    fontWeight: '800'
   },
-  progressBarBg: { 
-    height: 7, 
-    backgroundColor: 'rgba(255,255,255,0.1)', 
-    borderRadius: 10, 
-    marginBottom: 10 
+  progressBarBg: {
+    height: 7,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
+    marginBottom: 10
   },
-  progressBarFill: { 
-    height: 7, 
-    backgroundColor: '#fbbf24', 
-    borderRadius: 10 
+  progressBarFill: {
+    height: 7,
+    backgroundColor: '#fbbf24',
+    borderRadius: 10
   },
-  cardSubText: { 
-    color: '#94A3B8', 
+  cardSubText: {
+    color: '#94A3B8',
     fontSize: 11,
     fontStyle: 'italic'
   },
 
-  section: { 
-    marginTop: 30, 
-    paddingHorizontal: 25 
+  section: {
+    marginTop: 30,
+    paddingHorizontal: 25
   },
-  sectionTitle: { 
-    fontSize: 15, 
-    fontWeight: '700', 
-    color: '#334155', 
-    marginBottom: 15, 
-    textTransform: 'uppercase', 
-    letterSpacing: 1 
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 15,
+    textTransform: 'uppercase',
+    letterSpacing: 1
   },
   menuItem: {
     flexDirection: 'row',
@@ -450,38 +459,38 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
-  menuIconBg: { 
-    width: 46, 
-    height: 46, 
-    borderRadius: 14, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  menuIconBg: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
-  menuTextContent: { 
-    flex: 1, 
-    marginLeft: 15 
+  menuTextContent: {
+    flex: 1,
+    marginLeft: 15
   },
-  menuItemTitle: { 
-    fontSize: 15, 
-    fontWeight: '600', 
-    color: '#1E293B' 
+  menuItemTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1E293B'
   },
-  menuItemDesc: { 
-    fontSize: 12, 
-    color: '#64748B', 
-    marginTop: 2 
+  menuItemDesc: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2
   },
-  badge: { 
-    backgroundColor: '#F43F5E', 
-    paddingHorizontal: 10, 
-    paddingVertical: 4, 
-    borderRadius: 10, 
-    marginRight: 8 
+  badge: {
+    backgroundColor: '#F43F5E',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginRight: 8
   },
-  badgeText: { 
-    color: '#fff', 
-    fontSize: 10, 
-    fontWeight: '700' 
+  badgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700'
   },
 
   logoutBtn: {
@@ -503,10 +512,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 18,
   },
-  logoutText: { 
-    color: '#fff', 
-    fontSize: 16, 
-    fontWeight: '700', 
-    marginLeft: 12 
+  logoutText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 12
   },
 });

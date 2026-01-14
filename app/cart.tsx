@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
-import { 
-  View, Text, Image, TouchableOpacity, ScrollView, 
-  StyleSheet, Alert, ActivityIndicator, StatusBar, Platform, SafeAreaView 
+import {
+  View, Text, Image, TouchableOpacity, ScrollView,
+  StyleSheet, Alert, ActivityIndicator, StatusBar, Platform, SafeAreaView
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
@@ -65,9 +65,9 @@ export default function CartScreen() {
   const removeItem = (id: string) => {
     Alert.alert("Xác nhận", "Xóa sản phẩm này khỏi giỏ hàng?", [
       { text: "Hủy", style: "cancel" },
-      { 
-        text: "Xóa", 
-        style: "destructive", 
+      {
+        text: "Xóa",
+        style: "destructive",
         onPress: () => {
           const newItems = items.filter((item) => String(item.id) !== String(id));
           saveCartToStorage(newItems);
@@ -87,11 +87,11 @@ export default function CartScreen() {
   // 4. CHUYỂN SANG MÀN HÌNH THANH TOÁN
   const handleCheckout = () => {
     if (items.length === 0) return;
-    
+
     // Gửi toàn bộ dữ liệu giỏ hàng và thông tin giảm giá sang Checkout
     router.push({
       pathname: "/CheckoutScreen" as any,
-      params: { 
+      params: {
         cartData: JSON.stringify(items),
         discount: discount.toString()
       }
@@ -109,7 +109,7 @@ export default function CartScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#4f46e5" />
-      
+
       {/* Header Chuyên nghiệp */}
       <View style={styles.header}>
         <SafeAreaView>
@@ -121,9 +121,9 @@ export default function CartScreen() {
               <Text style={styles.headerTitle}>Giỏ hàng</Text>
               <Text style={styles.headerSubtitle}>{items.length} sản phẩm</Text>
             </View>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => items.length > 0 && Alert.alert("Xóa tất cả", "Làm trống giỏ hàng?", [
-                {text: "Hủy"}, {text: "Xóa", onPress: () => saveCartToStorage([])}
+                { text: "Hủy" }, { text: "Xóa", onPress: () => saveCartToStorage([]) }
               ])}
               style={styles.iconButton}
             >
@@ -159,27 +159,27 @@ export default function CartScreen() {
                 {/* Phân loại sản phẩm */}
                 {(item.colorSelected || item.sizeSelected) && (
                   <Text style={styles.variantText}>
-                   Màu: {item.colorSelected}{item.sizeSelected ? ` / size: ${item.sizeSelected}` : ''}
+                    Màu: {item.colorSelected}{item.sizeSelected ? ` / size: ${item.sizeSelected}` : ''}
                   </Text>
                 )}
 
                 <Text style={styles.itemPrice}>{formatPrice(item.priceNum)}</Text>
-                
+
                 <View style={styles.itemFooter}>
                   <View style={styles.qtyRow}>
                     <TouchableOpacity onPress={() => updateQuantity(item.id, -1)} style={styles.qtyBtn}>
                       <Ionicons name="remove" size={18} color="#4f46e5" />
                     </TouchableOpacity>
                     <Text style={styles.qtyText}>{item.cartQuantity}</Text>
-                    <TouchableOpacity 
-                      onPress={() => updateQuantity(item.id, 1)} 
+                    <TouchableOpacity
+                      onPress={() => updateQuantity(item.id, 1)}
                       style={styles.qtyBtn}
                       disabled={item.cartQuantity >= item.quantity}
                     >
-                      <Ionicons 
-                        name="add" 
-                        size={18} 
-                        color={item.cartQuantity >= item.quantity ? "#cbd5e1" : "#4f46e5"} 
+                      <Ionicons
+                        name="add"
+                        size={18}
+                        color={item.cartQuantity >= item.quantity ? "#cbd5e1" : "#4f46e5"}
                       />
                     </TouchableOpacity>
                   </View>
@@ -197,16 +197,16 @@ export default function CartScreen() {
       {items.length > 0 && (
         <View style={styles.footerCart}>
           {/* Voucher Section */}
-          <TouchableOpacity 
-            style={[styles.voucherBtn, voucherApplied && styles.voucherApplied]} 
+          <TouchableOpacity
+            style={[styles.voucherBtn, voucherApplied && styles.voucherApplied]}
             onPress={() => setVoucherApplied(!voucherApplied)}
           >
-            <MaterialCommunityIcons 
-              name={voucherApplied ? "ticket-percent" : "ticket-outline"} 
-              size={22} 
-              color={voucherApplied ? "#16a34a" : "#4f46e5"} 
+            <MaterialCommunityIcons
+              name={voucherApplied ? "ticket-percent" : "ticket-outline"}
+              size={22}
+              color={voucherApplied ? "#16a34a" : "#4f46e5"}
             />
-            <Text style={[styles.voucherBtnText, voucherApplied && {color: "#16a34a"}]}>
+            <Text style={[styles.voucherBtnText, voucherApplied && { color: "#16a34a" }]}>
               {voucherApplied ? "Đã áp dụng giảm giá 10%" : "Chọn mã giảm giá (Voucher)"}
             </Text>
             <Ionicons name="chevron-forward" size={16} color="#94a3b8" />
@@ -219,14 +219,14 @@ export default function CartScreen() {
             </View>
             <View style={styles.row}>
               <Text style={styles.rowLabel}>Phí vận chuyển</Text>
-              <Text style={[styles.rowValue, shipping === 0 && {color: '#10b981'}]}>
+              <Text style={[styles.rowValue, shipping === 0 && { color: '#10b981' }]}>
                 {shipping === 0 ? "Miễn phí" : formatPrice(shipping)}
               </Text>
             </View>
             {discount > 0 && (
               <View style={styles.row}>
                 <Text style={styles.rowLabel}>Giảm giá</Text>
-                <Text style={[styles.rowValue, {color: '#ef4444'}]}>-{formatPrice(discount)}</Text>
+                <Text style={[styles.rowValue, { color: '#ef4444' }]}>-{formatPrice(discount)}</Text>
               </View>
             )}
             <View style={styles.totalRow}>
@@ -379,31 +379,60 @@ const styles = StyleSheet.create({
   },
 
   /* ================== FOOTER ================== */
-footerCart: {
-  position: "absolute",
-  bottom: 0,
-  width: "100%",
-  backgroundColor: "white",
+  // footerCart: {
+  //   position: "absolute",
+  //   bottom: 0,
 
+
+  //   width: "100%",
+  //   backgroundColor: "white",
+
+  //   padding: 20,
+  //   paddingBottom: Platform.OS === "ios" ? 34 : 20,
+  //   paddingTop: 20,
+  //   borderTopLeftRadius: 32,
+  //   borderTopRightRadius: 32,
+
+  //   shadowColor: "#000",
+  //   shadowOffset: { width: 0, height: -8 },
+  //   shadowOpacity: 0.1,
+  //   shadowRadius: 14,
+  //   elevation: 18,
+  // },
+ footerCart: {
+  position: "absolute",
+
+  left: 0,
+  right: 0,
+
+  // 🔥 ĐẨY FOOTER LÊN (QUAN TRỌNG)
+  bottom: Platform.OS === "android" ? 0 : 0,
+  width: "100%",
+  paddingTop: 20,
+  backgroundColor: "white",
   padding: 20,
-  paddingBottom: Platform.OS === "ios" ? 34 : 20,
+
+  // 🔥 Android gesture bar rất cao → phải cộng thêm
+  paddingBottom: Platform.OS === "ios" ? 34 : 32,
 
   borderTopLeftRadius: 32,
   borderTopRightRadius: 32,
 
   shadowColor: "#000",
   shadowOffset: { width: 0, height: -8 },
-  shadowOpacity: 0.1,
+  shadowOpacity: 0.12,
   shadowRadius: 14,
   elevation: 18,
 },
+
+
 
   /* ================== VOUCHER ================== */
   voucherBtn: {
     flexDirection: "row",
     alignItems: "center",
     padding: 14,
-    borderRadius: 18,
+    borderRadius: 20,
     backgroundColor: "#f5f3ff",
     borderWidth: 1,
     borderColor: "#ddd6fe",
@@ -479,6 +508,7 @@ footerCart: {
     alignItems: "center",
     marginTop: 90,
     paddingHorizontal: 40,
+    
   },
   emptyIconBg: {
     width: 140,
