@@ -13,8 +13,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function CheckoutScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams(); 
-  
+  const params = useLocalSearchParams();
+
   const [buyItems, setBuyItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState('cod');
@@ -25,16 +25,16 @@ export default function CheckoutScreen() {
 
 
   const saveOrderToAPI = async (order: any) => {
-  const res = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyCDf0L31c7ZYq2HolzIxfKIsC9BIEUHgBo", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(order),
-  });
+    const res = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyCDf0L31c7ZYq2HolzIxfKIsC9BIEUHgBo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(order),
+    });
 
-  if (!res.ok) {
-    throw new Error("API error");
-  }
-};
+    if (!res.ok) {
+      throw new Error("API error");
+    }
+  };
 
   // --- ĐỊA CHỈ ---
   const displayAddress = {
@@ -49,7 +49,7 @@ export default function CheckoutScreen() {
       try {
         let rawData = (params.cartData as string) || await AsyncStorage.getItem('temp_checkout_items') || "[]";
         if (params.cartData) await AsyncStorage.setItem('temp_checkout_items', rawData);
-        
+
         const parsedData = JSON.parse(rawData);
         // Đảm bảo cartQuantity và giá luôn là số
         const standardizedData = parsedData.map((item: any) => ({
@@ -57,7 +57,7 @@ export default function CheckoutScreen() {
           finalPrice: Number(item.priceNum || item.price || 0),
           finalQty: Number(item.cartQuantity || 1)
         }));
-        
+
         setBuyItems(standardizedData);
       } catch (error) {
         console.error("Lỗi load Checkout:", error);
@@ -80,25 +80,46 @@ export default function CheckoutScreen() {
 
   const handlePlaceOrder = async () => {
     try {
-      const newOrder = {
-        orderId: 'ORD' + Math.floor(Math.random() * 1000000),
-        date: new Date().toLocaleDateString('vi-VN'),
-        status: 'processing',
-        total: total,
-        items: buyItems,
+      // 🔹 Tạo object order gọn – chuẩn Firebase
+      const orderData = {
+        userId: "USER_001", // sau này thay bằng user đăng nhập
+        items: buyItems.map(item => ({
+          productId: item.id || "",
+          name: item.name,
+          price: item.finalPrice,
+          quantity: item.finalQty,
+          image: item.image || ""
+        })),
+        totalPrice: total,
+        paymentMethod: paymentMethod,
+        status: "PENDING",
         address: displayAddress,
-        payment: paymentMethod
+        createdAt: serverTimestamp()
       };
 
+      // 🔥 LƯU LÊN FIREBASE
+      await addDoc(collection(db, "orders"), orderData);
+
+      // 🔹 (GIỮ NGUYÊN) lưu local nếu bạn đang dùng
       const existingOrdersStr = await AsyncStorage.getItem('user_orders');
       const existingOrders = existingOrdersStr ? JSON.parse(existingOrdersStr) : [];
-      await AsyncStorage.setItem('user_orders', JSON.stringify([newOrder, ...existingOrders]));
+      await AsyncStorage.setItem(
+        'user_orders',
+        JSON.stringify([orderData, ...existingOrders])
+      );
+
+      // 🔹 Clear cart local
       await AsyncStorage.removeItem('user_cart');
+
+      // 🔥 Hiện animation thành công
       setShowSuccess(true);
+
     } catch (error) {
+      console.error("Lỗi đặt hàng:", error);
       Alert.alert("Lỗi", "Không thể hoàn tất đặt hàng.");
     }
   };
+
 
   useEffect(() => {
     if (showSuccess) {
@@ -130,7 +151,7 @@ export default function CheckoutScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -141,7 +162,7 @@ export default function CheckoutScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        
+
         {/* Địa chỉ */}
         <View style={styles.card}>
           <View style={styles.cardHeader}>
@@ -222,7 +243,7 @@ export default function CheckoutScreen() {
           <Text style={styles.summaryLabel}>Phí vận chuyển</Text>
           <Text style={shipping === 0 ? styles.discountText : styles.summaryValue}>{shipping === 0 ? "Miễn phí" : safeFormatPrice(shipping)}</Text>
         </View>
-        
+
         <View style={styles.totalRow}>
           <View>
             <Text style={styles.totalLabel}>Tổng cộng</Text>
@@ -358,7 +379,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 14,
     fontWeight: '700',
-    
+
   },
   cardTitleInternal: {
     fontSize: 16,
@@ -516,7 +537,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-   
+
     borderTopColor: '#F1F5F9',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
