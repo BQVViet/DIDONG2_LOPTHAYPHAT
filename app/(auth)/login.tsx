@@ -17,6 +17,9 @@ import { Fonts } from '@/constants/theme';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AntDesign } from '@expo/vector-icons'; // Nếu dùng Expo
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../app/firebase/firebaseConfig";
+
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');

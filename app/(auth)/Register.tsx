@@ -1,3 +1,6 @@
+
+
+
 import { useState } from 'react';
 import {
   StyleSheet,
@@ -14,6 +17,10 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+// 🔥 FIRESTORE
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../../app/firebase/firebaseConfig";
+
 export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -27,6 +34,7 @@ export default function RegisterScreen() {
     password?: string;
     confirmPassword?: string;
   }>({});
+
   const router = useRouter();
 
 
@@ -52,6 +60,24 @@ export default function RegisterScreen() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // -------------------- CREATE USER FIRESTORE --------------------
+  const createUserFirestore = async (
+    uid: string,
+    email: string,
+    name: string
+  ) => {
+    await setDoc(doc(db, "users", uid), {
+      name: name,
+      email: email,
+      phone: "",
+      avatarUrl: "",
+      role: "user",
+      isActive: true,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
   };
 
   // -------------------- HANDLE REGISTER --------------------
@@ -90,8 +116,16 @@ export default function RegisterScreen() {
         throw new Error(message);
       }
 
+      // 🔥 CREATE USER IN FIRESTORE
+      await createUserFirestore(
+        data.localId, // UID
+        data.email,
+        name
+      );
+
       Alert.alert('Thành công', `Đăng ký thành công! Chào mừng ${name}`);
       router.replace('/(auth)/login');
+
     } catch (error: any) {
       Alert.alert('Lỗi đăng ký', error.message);
     }
@@ -107,18 +141,20 @@ export default function RegisterScreen() {
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <View >
+        <View>
           {/* HEADER */}
           <View style={styles.header}>
             <Ionicons name="person-add-outline" size={48} color="#7C3AED" />
             <Text style={styles.title}>Tạo tài khoản</Text>
-            <Text style={styles.subtitle}>Nhập thông tin để đăng ký tài khoản</Text>
+            <Text style={styles.subtitle}>
+              Nhập thông tin để đăng ký tài khoản
+            </Text>
           </View>
 
-          {/* NAME INPUT */}
+          {/* NAME */}
           <View>
             <View style={styles.inputGroup}>
-              <Ionicons name="person-outline" size={20} color="#7C3AED" style={styles.icon} />
+              <Ionicons name="person-outline" size={20} style={styles.icon} />
               <TextInput
                 style={styles.input}
                 placeholder="Họ và tên"
@@ -133,10 +169,10 @@ export default function RegisterScreen() {
             {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
           </View>
 
-          {/* EMAIL INPUT */}
+          {/* EMAIL */}
           <View>
             <View style={styles.inputGroup}>
-              <Ionicons name="mail-outline" size={20} color="#7C3AED" style={styles.icon} />
+              <Ionicons name="mail-outline" size={20} style={styles.icon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -153,10 +189,10 @@ export default function RegisterScreen() {
             {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
           </View>
 
-          {/* PASSWORD INPUT */}
+          {/* PASSWORD */}
           <View>
             <View style={styles.inputGroup}>
-              <Ionicons name="lock-closed-outline" size={20} color="#7C3AED" style={styles.icon} />
+              <Ionicons name="lock-closed-outline" size={20} style={styles.icon} />
               <TextInput
                 // ĐÃ SỬA: Áp dụng styles.input
                 style={styles.input}
@@ -178,13 +214,15 @@ export default function RegisterScreen() {
                 />
               </TouchableOpacity>
             </View>
-            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+            {errors.password && (
+              <Text style={styles.errorText}>{errors.password}</Text>
+            )}
           </View>
 
-          {/* CONFIRM PASSWORD INPUT */}
+          {/* CONFIRM PASSWORD */}
           <View>
             <View style={styles.inputGroup}>
-              <Ionicons name="lock-closed-outline" size={20} color="#7C3AED" style={styles.icon} />
+              <Ionicons name="lock-closed-outline" size={20} style={styles.icon} />
               <TextInput
                 // ĐÃ SỬA: Áp dụng styles.input
                 style={styles.input}
@@ -197,7 +235,9 @@ export default function RegisterScreen() {
                 secureTextEntry={!showConfirmPassword}
                 placeholderTextColor="#9CA3AF"
               />
-              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+              <TouchableOpacity
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
                 <Ionicons
                   name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
@@ -206,15 +246,17 @@ export default function RegisterScreen() {
                 />
               </TouchableOpacity>
             </View>
-            {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+            {errors.confirmPassword && (
+              <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+            )}
           </View>
 
-          {/* REGISTER BUTTON */}
+          {/* BUTTON */}
           <TouchableOpacity style={styles.button} onPress={handleRegister}>
             <Text style={styles.buttonText}>Đăng ký</Text>
           </TouchableOpacity>
 
-          {/* LOGIN LINK */}
+          {/* LOGIN */}
           <View style={styles.bottomLinks}>
             <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
               <Text style={styles.link}>Đã có tài khoản? Đăng nhập</Text>
@@ -226,20 +268,18 @@ export default function RegisterScreen() {
   );
 }
 
-// --- STYLESHEET (Đã hoàn thiện và tối ưu) ---
+// -------------------- STYLES --------------------
 const styles = StyleSheet.create({
   // 1. CONTAINER CHUNG
   container: {
-    flexGrow: 1,
-    // Nền Sáng đồng bộ
+    flex: 1,
     backgroundColor: '#F7F8FA',
   },
 
   // 2. SCROLLVIEW CONTAINER (CĂN GIỮA DỌC VÀ NGANG)
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center', // Căn giữa theo chiều dọc
-    alignItems: 'center', // Căn giữa theo chiều ngang
+    justifyContent: 'center',
     paddingHorizontal: 24,
   },
 
@@ -273,36 +313,34 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 25,
-    color: '#6B7280', // Màu chữ xám (Gray 500)
+    fontSize: 16,
     marginTop: 6,
+    color: '#6B7280',
     textAlign: 'center',
   },
   inputGroup: {
 
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF', // Nền Input trắng
-    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     marginBottom: 16,
     paddingHorizontal: 16,
     height: 50,
     borderWidth: 1,
-    borderColor: '#D1D5DB', // Viền xám nhạt
+    borderColor: '#D1D5DB',
   },
   icon: {
     marginRight: 12,
-    color: '#6366F1', // Màu nhấn Xanh/Tím
+    color: '#6366F1',
   },
   input: {
     flex: 1,
     fontSize: 16,
-    color: '#1F2937', // Màu chữ Input đen
-    paddingVertical: 0,
-    height: '100%',
+    color: '#1F2937',
   },
   button: {
-    backgroundColor: '#6366F1', // Màu nhấn Xanh/Tím
+    backgroundColor: '#6366F1',
     borderRadius: 12,
     paddingVertical: 15,
     marginTop: 32,
@@ -328,13 +366,13 @@ const styles = StyleSheet.create({
     paddingTop: 32,
   },
   link: {
-    color: '#6366F1', // Màu nhấn Xanh/Tím
+    color: '#6366F1',
     fontWeight: '600',
     fontSize: 15,
     textAlign: 'center',
   },
   errorText: {
-    color: '#F87171', // Màu Đỏ Cảnh Báo
+    color: '#F87171',
     marginBottom: 12,
     marginLeft: 8,
     fontSize: 13,
