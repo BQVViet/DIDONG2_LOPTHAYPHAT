@@ -1,7 +1,4 @@
-
-
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,177 +8,258 @@ import {
   SafeAreaView,
   TextInput,
   StatusBar,
-  Dimensions,
   LayoutAnimation,
   Platform,
   UIManager,
+  Alert,
+  Switch,
 } from 'react-native';
-import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+  serverTimestamp,
+  query,
+  where,
+} from 'firebase/firestore';
+import { db } from '../app/firebase/firebaseConfig';
 
-// Kích hoạt LayoutAnimation cho Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
+// Enable animation Android
+if (Platform.OS === 'android') {
+  UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
 
-const { width } = Dimensions.get('window');
-
-const initialAddresses = [
-  {
-    id: 1,
-    name: 'Nhà riêng',
-    fullName: 'Nguyễn Văn A',
-    phone: '+84 912 345 678',
-    address: '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
-    isDefault: true,
-  },
-  {
-    id: 2,
-    name: 'Văn phòng',
-    fullName: 'Nguyễn Văn A',
-    phone: '+84 912 345 678',
-    address: '456 Lê Lợi, Phường Bến Thành, Quận 1, TP. Hồ Chí Minh',
-    isDefault: false,
-  },
-];
+/* ================= TYPE ================= */
+type Address = {
+  id: string;
+  fullName: string;
+  phone: string;
+  email?: string;
+  street: string;
+  ward: string;
+  district: string;
+  city: string;
+  isDefault: boolean;
+  createdAt?: any;
+};
 
 export default function AddressManagementScreen() {
   const router = useRouter();
-  const [addresses, setAddresses] = useState(initialAddresses);
+
+  /* ================= STATE ================= */
+  const [addresses, setAddresses] = useState<Address[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
 
-  // HÀM MỚI: Chọn địa chỉ và truyền về Checkout
-  const handleSelectAddress = (addressItem: typeof initialAddresses[0]) => {
-    router.push({
-      pathname: "/CheckoutScreen" as any, // Hãy đảm bảo đường dẫn này đúng với cấu trúc file của bạn
-      params: {
-        selectedName: addressItem.fullName,
-        selectedPhone: addressItem.phone,
-        selectedAddress: addressItem.address
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [street, setStreet] = useState('');
+  const [ward, setWard] = useState('');
+  const [district, setDistrict] = useState('');
+  const [city, setCity] = useState('');
+  const [isDefault, setIsDefault] = useState(false);
+
+  /* ================= FETCH ================= */
+  const fetchAddresses = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, 'address'));
+
+      const list: Address[] = snapshot.docs.map(d => ({
+        id: d.id,
+        fullName: d.data().fullName,
+        phone: d.data().phone,
+        email: d.data().email ?? '',
+        street: d.data().street,
+        ward: d.data().ward,
+        district: d.data().district,
+        city: d.data().city,
+        isDefault: d.data().isDefault ?? false,
+        createdAt: d.data().createdAt,
+      }));
+
+      // Địa chỉ mặc định lên đầu
+      list.sort((a, b) => Number(b.isDefault) - Number(a.isDefault));
+
+      setAddresses(list);
+    } catch (err) {
+      console.log(err);
+      Alert.alert('Lỗi', 'Không tải được địa chỉ');
+    }
+  };
+
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  /* ================= ADD ================= */
+  const addAddress = async () => {
+    if (!fullName || !phone || !street || !ward || !district || !city) {
+      Alert.alert('Thiếu thông tin', 'Vui lòng nhập đầy đủ địa chỉ');
+      return;
+    }
+
+    try {
+      // Nếu chọn mặc định → bỏ mặc định cũ
+      if (isDefault) {
+        const q = query(
+          collection(db, 'address'),
+          where('isDefault', '==', true)
+        );
+        const snap = await getDocs(q);
+        snap.forEach(d => updateDoc(d.ref, { isDefault: false }));
       }
-    });
+
+      await addDoc(collection(db, 'address'), {
+        fullName,
+        phone,
+        email,
+        street,
+        ward,
+        district,
+        city,
+        isDefault,
+        createdAt: serverTimestamp(),
+      });
+
+      // reset form
+      setFullName('');
+      setPhone('');
+      setEmail('');
+      setStreet('');
+      setWard('');
+      setDistrict('');
+      setCity('');
+      setIsDefault(false);
+      setShowAddForm(false);
+
+      fetchAddresses();
+    } catch (err) {
+      console.log(err);
+      Alert.alert('Lỗi', 'Không thể lưu địa chỉ');
+    }
   };
 
-  const toggleAddForm = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setShowAddForm(!showAddForm);
+  /* ================= DELETE ================= */
+  const deleteAddress = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'address', id));
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setAddresses(prev => prev.filter(i => i.id !== id));
+    } catch {
+      Alert.alert('Lỗi', 'Không xoá được địa chỉ');
+    }
   };
 
-  const setDefault = (id: number) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setAddresses(addresses.map(addr => ({
-      ...addr,
-      isDefault: addr.id === id,
-    })));
-  };
-
-  const deleteAddress = (id: number) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setAddresses(addresses.filter(addr => addr.id !== id));
-  };
-
+  /* ================= UI ================= */
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#059669" />
-      
-      {/* Header - Màu phẳng (Solid) để tránh lỗi thư viện Gradient */}
+
+      {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
-            <TouchableOpacity 
-              onPress={() => router.back()} 
-              style={styles.backButton}
-            >
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
               <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
             <View>
               <Text style={styles.headerTitle}>Địa chỉ giao hàng</Text>
-              <Text style={styles.headerSubtitle}>{addresses.length} địa chỉ đã lưu</Text>
+              <Text style={styles.headerSubtitle}>
+                {addresses.length} địa chỉ đã lưu
+              </Text>
             </View>
           </View>
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.addButton}
-            onPress={toggleAddForm}
+            onPress={() => setShowAddForm(!showAddForm)}
           >
-            <Ionicons name={showAddForm ? "close" : "add"} size={28} color="#059669" />
+            <Ionicons name={showAddForm ? 'close' : 'add'} size={28} color="#059669" />
           </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
-        
-        {/* Form thêm địa chỉ mới */}
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {/* ADD FORM */}
         {showAddForm && (
           <View style={styles.addForm}>
             <Text style={styles.formTitle}>Thêm địa chỉ mới</Text>
-            <TextInput style={styles.input} placeholder="Họ và tên" placeholderTextColor="#94a3b8" />
-            <TextInput style={styles.input} placeholder="Số điện thoại" keyboardType="phone-pad" placeholderTextColor="#94a3b8" />
-            <TextInput style={styles.input} placeholder="Tên địa chỉ (Nhà, Văn phòng...)" placeholderTextColor="#94a3b8" />
-            <TextInput 
-              style={[styles.input, styles.textArea]} 
-              placeholder="Địa chỉ chi tiết" 
-              multiline 
-              numberOfLines={3} 
-              placeholderTextColor="#94a3b8"
-            />
+
+            <TextInput style={styles.input} placeholder="Họ và tên" value={fullName} onChangeText={setFullName} />
+            <TextInput style={styles.input} placeholder="Số điện thoại" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+            <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" value={email} onChangeText={setEmail} />
+
+            <TextInput style={styles.input} placeholder="Số nhà, tên đường" value={street} onChangeText={setStreet} />
+            <TextInput style={styles.input} placeholder="Phường / Xã" value={ward} onChangeText={setWard} />
+            <TextInput style={styles.input} placeholder="Quận / Huyện" value={district} onChangeText={setDistrict} />
+            <TextInput style={styles.input} placeholder="Tỉnh / Thành phố" value={city} onChangeText={setCity} />
+
+            <View style={styles.defaultRow}>
+              <Text style={{ fontWeight: '600' }}>Đặt làm mặc định</Text>
+              <Switch value={isDefault} onValueChange={setIsDefault} />
+            </View>
+
             <View style={styles.formActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={toggleAddForm}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowAddForm(false)}>
                 <Text style={styles.cancelBtnText}>Hủy</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={toggleAddForm}>
+              <TouchableOpacity style={styles.saveBtn} onPress={addAddress}>
                 <Text style={styles.saveBtnText}>Lưu địa chỉ</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
 
-        {/* Danh sách địa chỉ */}
-        {addresses.map((address) => (
+        {/* LIST */}
+        {addresses.map(item => (
           <TouchableOpacity 
-            key={address.id} 
-            activeOpacity={0.9} 
-            onPress={() => handleSelectAddress(address)} // Thêm sự kiện chọn địa chỉ
+            key={item.id} 
+            activeOpacity={0.7}
+            onPress={() => {
+                // 🔥 GỬI DỮ LIỆU VỀ CHECKOUT SCREEN
+                router.push({
+                    pathname: "/CheckoutScreen" as any, 
+                    params: { selectedAddress: JSON.stringify(item) }
+                });
+            }}
+            style={[styles.addressCard, item.isDefault && styles.defaultCard]}
           >
-            <View 
-              style={[
-                styles.addressCard,
-                address.isDefault && styles.defaultCard
-              ]}
-            >
-              <View style={styles.cardHeader}>
-                <View style={styles.cardHeaderLeft}>
-                  <View style={styles.iconCircle}>
-                    <Ionicons name="location" size={20} color="#059669" />
-                  </View>
-                  <View>
-                    <View style={styles.nameRow}>
-                      <Text style={styles.addressName}>{address.name}</Text>
-                      {address.isDefault && (
-                        <View style={styles.defaultBadge}>
-                          <Text style={styles.defaultBadgeText}>Mặc định</Text>
-                        </View>
-                      )}
+            <View style={styles.cardHeader}>
+              <View style={styles.cardHeaderLeft}>
+                <View style={styles.iconCircle}>
+                  <Ionicons name="location" size={20} color="#059669" />
+                </View>
+                <View>
+                  <Text style={styles.addressName}>{item.fullName}</Text>
+                  {item.isDefault && (
+                    <View style={styles.defaultBadge}>
+                      <Text style={styles.defaultBadgeText}>MẶC ĐỊNH</Text>
                     </View>
-                    <Text style={styles.userNameText}>{address.fullName}</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity style={styles.editBtn}>
-                    <Ionicons name="create-outline" size={20} color="#2563eb" />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.deleteBtn} onPress={() => deleteAddress(address.id)}>
-                    <Ionicons name="trash-outline" size={20} color="#ef4444" />
-                  </TouchableOpacity>
+                  )}
                 </View>
               </View>
 
-              <View style={styles.addressInfoBox}>
-                <Text style={styles.addressText}>{address.address}</Text>
-                <Text style={styles.phoneText}>{address.phone}</Text>
-              </View>
+              <TouchableOpacity 
+                style={styles.deleteBtn} 
+                onPress={(e) => {
+                    e.stopPropagation(); // Chặn không cho sự kiện click lan ra thẻ cha (không bị nhảy về Checkout khi bấm xóa)
+                    deleteAddress(item.id);
+                }}
+              >
+                <Ionicons name="trash-outline" size={20} color="#ef4444" />
+              </TouchableOpacity>
+            </View>
 
-            
+            <View style={styles.addressInfoBox}>
+              <Text style={styles.addressText}>
+                {item.street}, {item.ward}, {item.district}, {item.city}
+              </Text>
+              <Text style={styles.phoneText}>{item.phone}</Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -190,221 +268,79 @@ export default function AddressManagementScreen() {
   );
 }
 
-  const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F8FAFC' }, // Màu nền Slate 50 nhẹ nhàng hơn
-    
-    // HEADER
-    header: {
-      backgroundColor: '#059669',
-      paddingHorizontal: 24,
-      paddingTop: Platform.OS === 'ios' ? 10 : 40,
-      paddingBottom: 35,
-      borderBottomLeftRadius: 32, // Bo góc tinh tế hơn
-      borderBottomRightRadius: 32,
-      shadowColor: '#059669',
-      shadowOffset: { width: 0, height: 10 },
-      shadowOpacity: 0.25,
-      shadowRadius: 15,
-      elevation: 15,
-      zIndex: 10,
-    },
-    headerContent: { 
-      flexDirection: 'row', 
-      alignItems: 'center', 
-      justifyContent: 'space-between' 
-    },
-    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-    backButton: { 
-      backgroundColor: 'rgba(255,255,255,0.2)', 
-      padding: 10, 
-      borderRadius: 16, 
-      borderWidth: 1, 
-      borderColor: 'rgba(255,255,255,0.1)' 
-    },
-    headerTitle: { 
-      color: 'white', 
-      fontSize: 20,
-     
-      fontWeight: '800', 
-      letterSpacing: -0.5 
-    },
-    headerSubtitle: { 
-      color: '#D1FAE5', 
-      fontSize: 13, 
-      fontWeight: '500', 
-      opacity: 0.9, 
-      marginTop: 2 
-    },
-    addButton: { 
-      backgroundColor: 'white', 
-      width: 48, 
-      height: 48, 
-      borderRadius: 16, 
-      justifyContent: 'center', 
-      alignItems: 'center',
-      elevation: 8,
-      shadowColor: '#000',
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
+/* ================= STYLE ================= */
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
 
-    },
+  header: {
+    backgroundColor: '#059669',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'ios' ? 10 : 40,
+    paddingBottom: 35,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
 
-    // SCROLL CONTAINER
-    scrollContainer: { 
-      paddingHorizontal: 16, 
-      paddingTop: 20, 
-      paddingBottom: 40 
-    },
+  headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
 
-    // FORM THÊM MỚI
-    addForm: { 
-      backgroundColor: 'white', 
-      borderRadius: 24, 
-      padding: 20, 
-      marginBottom: 24,
-      elevation: 4,
-      shadowColor: '#000',
-      shadowOpacity: 0.05,
-      shadowRadius: 15,
+  backButton: { padding: 10, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.2)' },
+  headerTitle: { color: 'white', fontSize: 20, fontWeight: '800' },
+  headerSubtitle: { color: '#D1FAE5', fontSize: 13 },
 
-      borderWidth: 1,
-      borderColor: '#F1F5F9'
-    },
-    formTitle: { 
-      fontSize: 18, 
-      fontWeight: '800', 
-      color: '#1E293B', 
-      marginBottom: 16 
-    },
-    input: { 
-      backgroundColor: '#F1F5F9', 
-      borderRadius: 14, 
-      paddingHorizontal: 16, 
-      paddingVertical: 12, 
-      fontSize: 15, 
-      color: '#1E293B', 
-      marginBottom: 12, 
-      borderWidth: 1, 
-      borderColor: '#E2E8F0' 
-    },
-    textArea: { height: 80, textAlignVertical: 'top' },
-    formActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
-    cancelBtn: { 
-      flex: 1, 
-      backgroundColor: '#F1F5F9', 
-      paddingVertical: 14, 
-      borderRadius: 14, 
-      alignItems: 'center' 
-    },
-    cancelBtnText: { color: '#64748B', fontWeight: '700' },
-    saveBtn: { 
-      flex: 1, 
-      backgroundColor: '#059669', 
-      paddingVertical: 14, 
-      borderRadius: 14, 
-      alignItems: 'center' 
-    },
-    saveBtnText: { color: 'white', fontWeight: '700' },
+  addButton: {
+    backgroundColor: 'white',
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
-    // CARD ĐỊA CHỈ
-    addressCard: { 
-      backgroundColor: 'white', 
-      borderRadius: 24, 
-      padding: 18, 
-      marginBottom: 16, 
-      borderWidth: 1.5, 
-      borderColor: 'transparent',
-      shadowColor: '#64748B',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      elevation: 3 
-    },
-    defaultCard: { 
-      borderColor: '#059669', 
-      backgroundColor: '#FFFFFF',
-      shadowColor: '#059669',
-      shadowOpacity: 0.1
-    },
-    cardHeader: { 
-      flexDirection: 'row', 
-      justifyContent: 'space-between', 
-      alignItems: 'flex-start', 
-      marginBottom: 14 
-    },
-    cardHeaderLeft: { flexDirection: 'row', gap: 12, flex: 1 },
-    iconCircle: { 
-      width: 40, 
-      height: 40, 
-      backgroundColor: '#F0FDFA', 
-      borderRadius: 12, 
-      justifyContent: 'center', 
-      alignItems: 'center' 
-    },
-    nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    addressName: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
-    defaultBadge: { 
-      backgroundColor: '#059669', 
-      paddingHorizontal: 8, 
-      paddingVertical: 3, 
-      borderRadius: 8 
-    },
-    defaultBadgeText: { 
-      color: 'white', 
-      fontSize: 9, 
-      fontWeight: '900', 
-      textTransform: 'uppercase' 
-    },
-    userNameText: { 
-      color: '#64748B', 
-      fontSize: 14, 
-      marginTop: 2, 
-      fontWeight: '600' 
-    },
+  scrollContainer: { padding: 16 },
 
-    // ACTIONS
-    actionButtons: { flexDirection: 'row', gap: 8 },
-    editBtn: { backgroundColor: '#F0F7FF', padding: 8, borderRadius: 10 },
-    deleteBtn: { backgroundColor: '#FFF1F2', padding: 8, borderRadius: 10 },
+  addForm: {
+    backgroundColor: 'white',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 24,
+  },
 
-    // BOX THÔNG TIN CHI TIẾT
-    addressInfoBox: { 
-      backgroundColor: '#F8FAFC', 
-      borderRadius: 16, 
-      padding: 14, 
-      marginBottom: 14, 
-      borderWidth: 1, 
-      borderColor: '#F1F5F9' 
-    },
-    addressText: { 
-      color: '#475569', 
-      fontSize: 14, 
-      lineHeight: 20, 
-      marginBottom: 6, 
-      fontWeight: '500' 
-    },
-    phoneText: { 
-      color: '#1E293B', 
-      fontSize: 14, 
-      fontWeight: '700',
-      letterSpacing: 0.2
-    },
+  formTitle: { fontSize: 18, fontWeight: '800', marginBottom: 16 },
 
-    // NÚT ĐẶT MẶC ĐỊNH
-    setAsDefaultBtn: { 
-      flexDirection: 'row', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      backgroundColor: '#F0FDFA', 
-      paddingVertical: 12, 
-      borderRadius: 14, 
-      gap: 8, 
-      borderWidth: 1, 
-      borderColor: '#05966933' // Opacity 20%
-    },
-    setAsDefaultText: { 
-      color: '#059669', 
-      fontWeight: '700', 
-      fontSize: 14 
-    },
-  });
+  input: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 12,
+  },
+
+  defaultRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 8 },
+
+  formActions: { flexDirection: 'row', gap: 10 },
+
+  cancelBtn: { flex: 1, padding: 14, backgroundColor: '#F1F5F9', borderRadius: 14 },
+  cancelBtnText: { textAlign: 'center', fontWeight: '700' },
+
+  saveBtn: { flex: 1, padding: 14, backgroundColor: '#059669', borderRadius: 14 },
+  saveBtnText: { color: 'white', textAlign: 'center', fontWeight: '700' },
+
+  addressCard: { backgroundColor: 'white', borderRadius: 24, padding: 18, marginBottom: 16 },
+  defaultCard: { borderWidth: 1.5, borderColor: '#059669' },
+
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between' },
+  cardHeaderLeft: { flexDirection: 'row', gap: 12 },
+
+  iconCircle: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#F0FDFA', justifyContent: 'center', alignItems: 'center' },
+
+  addressName: { fontWeight: '800', fontSize: 16 },
+
+  defaultBadge: { backgroundColor: '#059669', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  defaultBadgeText: { color: 'white', fontSize: 10, fontWeight: '800' },
+
+  deleteBtn: { padding: 10 },
+
+  addressInfoBox: { backgroundColor: '#F8FAFC', borderRadius: 16, padding: 14, marginTop: 10 },
+  addressText: { marginBottom: 6 },
+  phoneText: { fontWeight: '700' },
+});

@@ -232,7 +232,7 @@ export default function ProfileScreen({
         <View style={[styles.section, { marginBottom: 20 }]}>
           <Text style={styles.sectionTitle}>Cài đặt hệ thống</Text>
           {[
-            { title: 'Thông báo', icon: 'notifications', lib: 'Ionicons', color: '#f59e0b', desc: 'Cài đặt nhắc nhở', route: '/NotificationScreen' },
+           
             { title: 'Ưu đãi của tôi', icon: 'card-giftcard', lib: 'MaterialIcons', color: '#06b6d4', desc: 'Voucher khả dụng', route: '/vouchers' },
             { title: 'Tùy chỉnh', icon: 'settings', lib: 'Ionicons', color: '#64748b', desc: 'Giao diện & Bảo mật', route: '/Setting' },
           ].map((item, idx) => (

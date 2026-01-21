@@ -38,6 +38,16 @@ export default function TabLayout() {
           ),
         }}
       />
+        {/* Notification */}
+      <Tabs.Screen
+        name="Notification"
+        options={{
+          title: 'Thông báo',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="notifications" size={28} color={color} />
+          ),
+        }}
+      />
 
       {/* PROFILE */}
       <Tabs.Screen
@@ -49,6 +59,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
     </Tabs>
   );
 }

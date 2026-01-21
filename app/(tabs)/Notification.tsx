@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,72 +8,80 @@ import {
   SafeAreaView,
   StatusBar,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { 
+  collection, 
+  query, 
+  where, 
+  onSnapshot, 
+  orderBy, 
+  doc, 
+  updateDoc, 
+  writeBatch 
+} from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
 
-// Màu sắc chủ đạo thay cho Gradient
 const PRIMARY_COLOR = '#ea580c';
 
-// Dữ liệu mẫu (Notification Data)
-const initialNotifications = [
-  {
-    id: '1',
-    type: 'order',
-    title: 'Đơn hàng đã được giao',
-    message: 'Đơn hàng #ORD-2024-001 đã được giao thành công. Cảm ơn bạn đã mua hàng!',
-    time: '5 phút trước',
-    icon: 'package-variant-closed',
-    lib: 'MaterialCommunityIcons',
-    bgColor: '#22c55e', // Màu icon thay cho gradient
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'promotion',
-    title: 'Flash Sale đang diễn ra! 🔥',
-    message: 'Giảm đến 50% cho các sản phẩm điện thoại. Nhanh tay đặt hàng!',
-    time: '1 giờ trước',
-    icon: 'tag',
-    lib: 'FontAwesome5',
-    bgColor: '#f97316',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'shipping',
-    title: 'Đơn hàng đang được giao',
-    message: 'Đơn hàng #ORD-2024-002 đang trên đường giao đến bạn.',
-    time: '2 giờ trước',
-    icon: 'truck-delivery',
-    lib: 'MaterialCommunityIcons',
-    bgColor: '#3b82f6',
-    read: true,
-  },
-];
-
-export default function NotificationScreen() {
+export default function Notification() {
   const router = useRouter();
-  const [notifs, setNotifs] = useState(initialNotifications);
+  const [notifs, setNotifs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'all' | 'unread'>('all');
 
-  // Logic lọc thông báo
-  const filteredNotifs = selectedTab === 'all' 
-    ? notifs 
-    : notifs.filter(n => !n.read);
+  const userId = 'USER_001'; // Thay bằng ID thực tế từ Auth
 
+  // Lắng nghe thông báo Realtime
+  useEffect(() => {
+    const q = query(
+      collection(db, 'notifications'),
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map(d => ({
+        id: d.id,
+        ...d.data(),
+        // Chuyển Firebase Timestamp sang String hiển thị
+        timeDisplay: d.data().createdAt?.toDate() 
+          ? d.data().createdAt.toDate().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) + ' ' + 
+            d.data().createdAt.toDate().toLocaleDateString('vi-VN')
+          : 'Vừa xong'
+      }));
+      setNotifs(list);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const markAsRead = async (item: any) => {
+    if (!item.read) {
+      await updateDoc(doc(db, 'notifications', item.id), { read: true });
+    }
+    // Nếu là thông báo đơn hàng, bấm vào dẫn tới chi tiết đơn
+    if (item.orderId) {
+      router.push({ pathname: "/OrderDetailScreen", params: { orderId: item.orderId } } as any);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    const batch = writeBatch(db);
+    notifs.forEach(n => {
+      if (!n.read) {
+        batch.update(doc(db, 'notifications', n.id), { read: true });
+      }
+    });
+    await batch.commit();
+  };
+
+  const filteredNotifs = selectedTab === 'all' ? notifs : notifs.filter(n => !n.read);
   const unreadCount = notifs.filter(n => !n.read).length;
 
-  // Logic đánh dấu đã đọc
-  const markAsRead = (id: string) => {
-    setNotifs(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
-
-  const markAllAsRead = () => {
-    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
-  // Hàm render Icon linh hoạt
   const renderIcon = (lib: string, name: string, color: string) => {
     switch (lib) {
       case 'MaterialCommunityIcons': return <MaterialCommunityIcons name={name as any} size={22} color={color} />;
@@ -85,13 +93,12 @@ export default function NotificationScreen() {
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity 
       activeOpacity={0.8}
-      onPress={() => markAsRead(item.id)}
+      onPress={() => markAsRead(item)}
       style={[styles.notifCard, !item.read && styles.unreadCard]}
     >
-      <View style={[styles.iconContainer, { backgroundColor: item.bgColor }]}>
+      <View style={[styles.iconContainer, { backgroundColor: item.bgColor || '#64748b' }]}>
         {renderIcon(item.lib, item.icon, 'white')}
       </View>
-      
       <View style={styles.notifContent}>
         <View style={styles.notifHeaderRow}>
           <Text style={[styles.notifTitle, !item.read && styles.boldText]} numberOfLines={1}>
@@ -100,7 +107,7 @@ export default function NotificationScreen() {
           {!item.read && <View style={styles.unreadDot} />}
         </View>
         <Text style={styles.notifMessage} numberOfLines={2}>{item.message}</Text>
-        <Text style={styles.notifTime}>{item.time}</Text>
+        <Text style={styles.notifTime}>{item.timeDisplay}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -108,7 +115,6 @@ export default function NotificationScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.headerInfo}>
@@ -117,10 +123,9 @@ export default function NotificationScreen() {
             </TouchableOpacity>
             <View>
               <Text style={styles.headerTitle}>Thông báo</Text>
-              <Text style={styles.headerSubtitle}>{unreadCount} chưa đọc</Text>
+              <Text style={styles.headerSubtitle}>{unreadCount} tin mới</Text>
             </View>
           </View>
-          
           {unreadCount > 0 && (
             <TouchableOpacity onPress={markAllAsRead} style={styles.markAllBtn}>
               <Text style={styles.markAllText}>Đọc tất cả</Text>
@@ -129,33 +134,36 @@ export default function NotificationScreen() {
         </View>
 
         <View style={styles.tabContainer}>
-          <TouchableOpacity 
-            onPress={() => setSelectedTab('all')}
-            style={[styles.tab, selectedTab === 'all' && styles.activeTab]}
-          >
-            <Text style={[styles.tabText, selectedTab === 'all' && styles.activeTabText]}>Tất cả</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            onPress={() => setSelectedTab('unread')}
-            style={[styles.tab, selectedTab === 'unread' && styles.activeTab]}
-          >
-            <Text style={[styles.tabText, selectedTab === 'unread' && styles.activeTabText]}>Chưa đọc</Text>
-          </TouchableOpacity>
+          {['all', 'unread'].map((t) => (
+            <TouchableOpacity 
+              key={t}
+              onPress={() => setSelectedTab(t as any)}
+              style={[styles.tab, selectedTab === t && styles.activeTab]}
+            >
+              <Text style={[styles.tabText, selectedTab === t && styles.activeTabText]}>
+                {t === 'all' ? 'Tất cả' : 'Chưa đọc'}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 
-      <FlatList
-        data={filteredNotifs}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="notifications-off-outline" size={60} color="#cbd5e1" />
-            <Text style={styles.emptyText}>Không có thông báo nào</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} style={{ marginTop: 50 }} />
+      ) : (
+        <FlatList
+          data={filteredNotifs}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="notifications-off-outline" size={60} color="#cbd5e1" />
+              <Text style={styles.emptyText}>Bạn không có thông báo nào</Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -169,11 +177,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
   },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   headerInfo: { flexDirection: 'row', alignItems: 'center' },
@@ -194,12 +197,12 @@ const styles = StyleSheet.create({
     padding: 15, 
     borderRadius: 24, 
     marginBottom: 12,
+    elevation: 2,
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 10,
-    elevation: 2 
   },
-  unreadCard: { borderWidth: 1, borderColor: '#fdba74' },
+  unreadCard: { borderWidth: 1, borderColor: '#fdba74', backgroundColor: '#fffaf5' },
   iconContainer: { width: 48, height: 48, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
   notifContent: { flex: 1, marginLeft: 15 },
   notifHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

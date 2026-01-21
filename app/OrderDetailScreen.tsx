@@ -96,12 +96,25 @@ export default function OrderDetailScreen() {
           <Text style={styles.statusText}>{getStatusText(order.status)}</Text>
         </View>
 
-        {/* ADDRESS */}
+        {/* ADDRESS - ĐÃ SỬA ĐỂ ĂN HẾT THÔNG TIN */}
         <View style={styles.card}>
-          <Text style={styles.label}>Địa chỉ nhận hàng</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <Ionicons name="location-outline" size={18} color="#64748b" style={{ marginRight: 6 }} />
+            <Text style={styles.label}>Địa chỉ nhận hàng</Text>
+          </View>
+          
           <Text style={styles.bold}>{order.address?.fullName}</Text>
-          <Text>{order.address?.phone}</Text>
-          <Text style={{ marginTop: 4 }}>{order.address?.address}</Text>
+          <Text style={{ color: "#475569", marginVertical: 2 }}>{order.address?.phone}</Text>
+          
+          {/* Nối các trường địa chỉ lại nếu dữ liệu tồn tại */}
+          <Text style={{ marginTop: 4, lineHeight: 20, color: "#1e293b" }}>
+            {order.address?.street}
+            {order.address?.ward ? `, ${order.address.ward}` : ""}
+            {order.address?.district ? `, ${order.address.district}` : ""}
+            {order.address?.city ? `, ${order.address.city}` : ""}
+            {/* Dự phòng nếu địa chỉ lưu kiểu cũ (chuỗi đơn) */}
+            {!order.address?.street && order.address?.address ? order.address.address : ""}
+          </Text>
         </View>
 
         {/* PRODUCTS */}
@@ -164,15 +177,15 @@ const styles = StyleSheet.create({
   },
 
   /* ===== HEADER ===== */
- header: {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: 16,
-  paddingTop: 40,   // 👈 đẩy header xuống
-  paddingBottom: 12,
-  backgroundColor: "#FFFFFF",
-  borderBottomWidth: 1,
-  borderBottomColor: "#E5E7EB",
+  header: {
+   flexDirection: "row",
+   alignItems: "center",
+   paddingHorizontal: 16,
+   paddingTop: 40,   // 👈 đẩy header xuống
+   paddingBottom: 12,
+   backgroundColor: "#FFFFFF",
+   borderBottomWidth: 1,
+   borderBottomColor: "#E5E7EB",
 },
 
   headerTitle: {
